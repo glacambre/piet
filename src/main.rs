@@ -527,10 +527,9 @@ fn main() {
                 }
             },
             // Mod
-            // FIXME: Rust modulo semantics aren's the same as Piet's
             (2, 1) => {
                 if let (Some(a), Some(b)) = (piet_stack.pop(), piet_stack.pop()) {
-                    piet_stack.push(b % a);
+                    piet_stack.push((b % a) + a);
                 }
             },
             // Not
