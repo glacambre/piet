@@ -460,13 +460,13 @@ fn main() {
     let mut piet_stack: Vec<isize> = Vec::new();
     let mut dp = Direction::Right;
     let mut cc = Direction::Left;
+    let mut chars = std::io::stdin().chars();
 
     let mut current_codel = picture[0][0].clone();
     'main_loop: loop {
         if debug {
             println!("{:?}, {:?}, {:?}", current_codel, dp, cc);
             println!("{:?}", piet_stack);
-            std::io::stdin().read_line(&mut String::new());
         }
         let next_codel;
         let mut attempts = 0;
@@ -623,15 +623,13 @@ fn main() {
             },
             // in(char)
             (5, 0) => {
-                let stdin = std::io::stdin();
-                let mut chars = stdin.lock().chars();
-                match chars.nth(0) {
-                    Some(Ok(char)) => {
-                        if let Some(char) = char.to_digit(10) {
-                            piet_stack.push(char as isize);
-                        }
-                    },
-                    _ => (),
+                if let Some(Ok(char)) = chars.next() {
+                    piet_stack.push(char as isize);
+                } else {
+                    chars = std::io::stdin().chars();
+                    if let Some(Ok(char)) = chars.next() {
+                        piet_stack.push(char as isize);
+                    }
                 }
             },
             // out(number)
