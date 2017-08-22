@@ -1,0 +1,8 @@
+[package]
+name = "mytest"
+version = "0.1.0"
+authors = ["me"]
+
+[dependencies]
+png = "0.9.0"
+getopts = "0.2"
