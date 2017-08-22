@@ -383,7 +383,7 @@ fn can_go_in_direction<'a>(
     return (true, &picture[tmpy as usize][tmpx as usize]);
 }
 
-fn get_picture(filename: std::string::String) -> Vec<Vec<Codel>> {
+fn get_picture(filename: &std::string::String, codel_size: usize) -> Vec<Vec<Codel>> {
     let decoder = png::Decoder::new(std::fs::File::open(filename).unwrap());
     let (info, mut reader) = decoder.read_info().unwrap();
     let mut buffer = vec![0; info.buffer_size()];
@@ -412,6 +412,9 @@ fn get_picture(filename: std::string::String) -> Vec<Vec<Codel>> {
     let mut i = 0;
     for pixel in buffer.chunks(values_per_pixel) {
         let (x, y) = (i % pic_width, i / pic_width);
+        if x % codel_size != 0 || y % codel_size != 0 {
+            continue;
+        }
         picture[y][x].x = x;
         picture[y][x].y = y;
         picture[y][x].color = match &pixel[0..3] {
@@ -447,16 +450,31 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();
-    opts.optopt("f", "file", "name of the file", "FILE");
-    opts.optflag("d", "debug", "use debug mode");
+    opts.optopt("c", "codel_size", "Number of pixels per codels. Default: 1", "2");
+    opts.optflag("d", "debug", "Use debug mode.");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(e) => panic!(e.to_string()),
     };
 
-    let debug = matches.opt_present("d");
+    if matches.free.len() != 1 {
+        let brief = format!("Usage: {} file.png [options]", args[0]);
+        print!("{}", opts.usage(&brief));
+        std::process::exit(1);
+    }
 
-    let picture = get_picture(matches.opt_str("f").unwrap());
+    let debug = matches.opt_present("d");
+    let mut codel_size = 1;
+    if matches.opt_present("c") {
+        if let Ok(num) = matches.opt_str("c").unwrap().parse::<usize>() {
+            codel_size = if num > 0 { num } else { 1 };
+        } else {
+            println!("Error: codel size has to be a greater than 0.");
+            std::process::exit(1);
+        }
+    }
+
+    let picture = get_picture(&matches.free[0], codel_size);
     let mut piet_stack: Vec<isize> = Vec::new();
     let mut dp = Direction::Right;
     let mut cc = Direction::Left;
