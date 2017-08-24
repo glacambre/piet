@@ -200,50 +200,50 @@ impl std::fmt::Display for PietColor {
             Hue::White => write!(f, "{}{}WW", Bg(AnsiValue(231)), Fg(AnsiValue(231))),
             Hue::Black => write!(f, "{}{}DD", Bg(AnsiValue(0)), Fg(AnsiValue(0))),
         }
-            // Hue::Red => {
-            //     match self.lightness {
-            //         Light => write!(f, "{} ", Bg(Rgb(255, 192, 192))),
-            //         Normal => write!(f, "{} ", Bg(Rgb(255, 0, 0))),
-            //         Dark => write!(f, "{} ", Bg(Rgb(192, 0, 0))),
-            //     }
-            // },
-            // Hue::Yellow => {
-            //     match self.lightness {
-            //         Light => write!(f, "{} ", Bg(Rgb(255, 255, 192))),
-            //         Normal => write!(f, "{} ", Bg(Rgb(255, 255, 0))),
-            //         Dark => write!(f, "{} ", Bg(Rgb(192, 192, 0))),
-            //     }
-            // },
-            // Hue::Green => {
-            //     match self.lightness {
-            //         Light => write!(f, "{} ", Bg(Rgb(192, 255, 192))),
-            //         Normal => write!(f, "{} ", Bg(Rgb(0, 255, 0))),
-            //         Dark => write!(f, "{} ", Bg(Rgb(0, 192, 0))),
-            //     }
-            // },
-            // Hue::Cyan => {
-            //     match self.lightness {
-            //         Light => write!(f, "{} ", Bg(Rgb(192, 255, 255))),
-            //         Normal => write!(f, "{} ", Bg(Rgb(0, 255, 255))),
-            //         Dark => write!(f, "{} ", Bg(Rgb(255, 192, 192))),
-            //     }
-            // },
-            // Hue::Blue => {
-            //     match self.lightness {
-            //         Light => write!(f, "{} ", Bg(Rgb(192, 192, 255))),
-            //         Normal => write!(f, "{} ", Bg(Rgb(0, 0, 255))),
-            //         Dark => write!(f, "{} ", Bg(Rgb(0, 0, 192))),
-            //     }
-            // },
-            // Hue::Magenta => {
-            //     match self.lightness {
-            //         Light => write!(f, "{} ", Bg(Rgb(255, 192, 255))),
-            //         Normal => write!(f, "{} ", Bg(Rgb(255, 0, 255))),
-            //         Dark => write!(f, "{} ", Bg(Rgb(192, 0, 192))),
-            //     }
-            // },
-            // Hue::White => write!(f, "{} ", Bg(Rgb(255, 255, 255))),
-            // Hue::Black => write!(f, "{} ", Bg(Rgb(0, 0, 0))),
+        // Hue::Red => {
+        //     match self.lightness {
+        //         Light => write!(f, "{} ", Bg(Rgb(255, 192, 192))),
+        //         Normal => write!(f, "{} ", Bg(Rgb(255, 0, 0))),
+        //         Dark => write!(f, "{} ", Bg(Rgb(192, 0, 0))),
+        //     }
+        // },
+        // Hue::Yellow => {
+        //     match self.lightness {
+        //         Light => write!(f, "{} ", Bg(Rgb(255, 255, 192))),
+        //         Normal => write!(f, "{} ", Bg(Rgb(255, 255, 0))),
+        //         Dark => write!(f, "{} ", Bg(Rgb(192, 192, 0))),
+        //     }
+        // },
+        // Hue::Green => {
+        //     match self.lightness {
+        //         Light => write!(f, "{} ", Bg(Rgb(192, 255, 192))),
+        //         Normal => write!(f, "{} ", Bg(Rgb(0, 255, 0))),
+        //         Dark => write!(f, "{} ", Bg(Rgb(0, 192, 0))),
+        //     }
+        // },
+        // Hue::Cyan => {
+        //     match self.lightness {
+        //         Light => write!(f, "{} ", Bg(Rgb(192, 255, 255))),
+        //         Normal => write!(f, "{} ", Bg(Rgb(0, 255, 255))),
+        //         Dark => write!(f, "{} ", Bg(Rgb(255, 192, 192))),
+        //     }
+        // },
+        // Hue::Blue => {
+        //     match self.lightness {
+        //         Light => write!(f, "{} ", Bg(Rgb(192, 192, 255))),
+        //         Normal => write!(f, "{} ", Bg(Rgb(0, 0, 255))),
+        //         Dark => write!(f, "{} ", Bg(Rgb(0, 0, 192))),
+        //     }
+        // },
+        // Hue::Magenta => {
+        //     match self.lightness {
+        //         Light => write!(f, "{} ", Bg(Rgb(255, 192, 255))),
+        //         Normal => write!(f, "{} ", Bg(Rgb(255, 0, 255))),
+        //         Dark => write!(f, "{} ", Bg(Rgb(192, 0, 192))),
+        //     }
+        // },
+        // Hue::White => write!(f, "{} ", Bg(Rgb(255, 255, 255))),
+        // Hue::Black => write!(f, "{} ", Bg(Rgb(0, 0, 0))),
     }
 }
 
@@ -481,7 +481,7 @@ fn can_go_in_direction<'a>(
     return (true, &picture[tmpy as usize][tmpx as usize]);
 }
 
-fn get_picture(filename: &std::string::String, codel_size: usize) -> Vec<Vec<Codel>> {
+fn get_picture(filename: &std::string::String, codel_size: usize, default_color: PietColor) -> Vec<Vec<Codel>> {
     let decoder = png::Decoder::new(std::fs::File::open(filename).unwrap());
     let (info, mut reader) = decoder.read_info().unwrap();
     let mut buffer = vec![0; info.buffer_size()];
@@ -499,7 +499,7 @@ fn get_picture(filename: &std::string::String, codel_size: usize) -> Vec<Vec<Cod
     let mut picture: Vec<Vec<Codel>> = vec![
         vec![
             Codel {
-                color: PietColor { hue: Hue::White, lightness: Lightness::Normal },
+                color: default_color.clone(),
                 x: 0,
                 y: 0,
             };
@@ -535,14 +535,15 @@ fn get_picture(filename: &std::string::String, codel_size: usize) -> Vec<Vec<Cod
             &[255, 0, 255] => PietColor { hue: Hue::Magenta, lightness: Lightness::Normal },
             &[192, 0, 192] => PietColor { hue: Hue::Magenta, lightness: Lightness::Dark },
             &[0, 0, 0] => PietColor { hue: Hue::Black, lightness: Lightness::Normal },
-            _ => PietColor { hue: Hue::White, lightness: Lightness::Normal },
+            &[255, 255, 255] => PietColor { hue: Hue::White, lightness: Lightness::Normal },
+            _ => default_color.clone(),
         };
         i += 1;
     }
     return picture;
 }
 
-fn display_pic (picture: &Vec<Vec<Codel>>, current_codel: &Codel, dp: Direction, cc: Direction) {
+fn display_pic(picture: &Vec<Vec<Codel>>, current_codel: &Codel, dp: Direction, cc: Direction) {
     for row in picture.iter() {
         for codel in row.iter() {
             print!("{}", codel.color);
@@ -558,6 +559,7 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();
+    opts.optflag("b", "black", "Use black as default color instead of white.");
     opts.optopt("c", "codel_size", "Number of pixels per codels. Default: 1", "2");
     opts.optflag("d", "debug", "Use debug mode.");
     opts.optflag("v", "view", "Display the program being run.");
@@ -584,7 +586,13 @@ fn main() {
         }
     }
 
-    let picture = get_picture(&matches.free[0], codel_size);
+    let default_color = if matches.opt_present("b") {
+        PietColor { hue: Hue::Black, lightness: Lightness::Normal }
+    } else {
+        PietColor { hue: Hue::White, lightness: Lightness::Normal }
+    };
+
+    let picture = get_picture(&matches.free[0], codel_size, default_color);
     let mut current_codel = picture[0][0].clone();
     let mut piet_stack: Vec<isize> = Vec::new();
     let mut dp = Direction::Right;
