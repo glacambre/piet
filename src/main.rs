@@ -610,7 +610,7 @@ fn main() {
     #[cfg(feature = "default")] {
         if view_program {
             let (width, height) = termion::terminal_size().unwrap();
-            if height as usize > picture.len() || width as usize > picture[0].len() {
+            if (height as usize) <= picture.len() || (width as usize) < picture[0].len() {
                 println!("Picture is larger than terminal size. View anyway [y/n]?");
                 let mut input = String::new();
                 match std::io::stdin().read_line(&mut input) {
