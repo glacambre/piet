@@ -481,7 +481,11 @@ fn can_go_in_direction<'a>(
     return (true, &picture[tmpy as usize][tmpx as usize]);
 }
 
-fn get_picture(filename: &std::string::String, codel_size: usize, default_color: PietColor) -> Vec<Vec<Codel>> {
+fn get_picture(
+    filename: &std::string::String,
+    codel_size: usize,
+    default_color: PietColor,
+) -> Vec<Vec<Codel>> {
     let decoder = png::Decoder::new(std::fs::File::open(filename).unwrap());
     let (info, mut reader) = decoder.read_info().unwrap();
     let mut buffer = vec![0; info.buffer_size()];
@@ -496,23 +500,20 @@ fn get_picture(filename: &std::string::String, codel_size: usize, default_color:
     let pic_width = info.width as usize;
     let pic_height = info.height as usize;
 
-    let mut picture: Vec<Vec<Codel>> = vec![
+    let mut picture: Vec<Vec<Codel>> =
         vec![
-            Codel {
-                color: default_color.clone(),
-                x: 0,
-                y: 0,
-            };
-            pic_width
+            vec![Codel { color: default_color.clone(), x: 0, y: 0 }; pic_width / codel_size];
+            pic_height / codel_size
         ];
-        pic_height
-    ];
-    let mut i = 0;
+    let mut i = -1;
     for pixel in buffer.chunks(values_per_pixel) {
-        let (x, y) = (i % pic_width, i / pic_width);
+        i += 1;
+        let (mut x, mut y) = ((i as usize) % pic_width, (i as usize) / pic_width);
         if x % codel_size != 0 || y % codel_size != 0 {
             continue;
         }
+        x = x / codel_size;
+        y = y / codel_size;
         picture[y][x].x = x;
         picture[y][x].y = y;
         picture[y][x].color = match &pixel[0..3] {
@@ -538,7 +539,6 @@ fn get_picture(filename: &std::string::String, codel_size: usize, default_color:
             &[255, 255, 255] => PietColor { hue: Hue::White, lightness: Lightness::Normal },
             _ => default_color.clone(),
         };
-        i += 1;
     }
     return picture;
 }
