@@ -5,6 +5,7 @@ use std::io::prelude::*;
 
 extern crate png;
 extern crate getopts;
+extern crate termion;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Lightness {
@@ -146,6 +147,103 @@ struct PietColor {
 impl PietColor {
     fn diff_to(self, other: &PietColor) -> (usize, usize) {
         (self.hue.diff_to(&other.hue), self.lightness.diff_to(&other.lightness))
+    }
+}
+
+impl std::fmt::Display for PietColor {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        use Lightness::*;
+        use termion::color::*;
+        match self.hue {
+            Hue::Red => {
+                match self.lightness {
+                    Light => write!(f, "{}{}LR", Bg(AnsiValue(217)), Fg(AnsiValue(217))),
+                    Normal => write!(f, "{}{}NR", Bg(AnsiValue(196)), Fg(AnsiValue(196))),
+                    Dark => write!(f, "{}{}DR", Bg(AnsiValue(124)), Fg(AnsiValue(124))),
+                }
+            },
+            Hue::Yellow => {
+                match self.lightness {
+                    Light => write!(f, "{}{}LY", Bg(AnsiValue(229)), Fg(AnsiValue(229))),
+                    Normal => write!(f, "{}{}NY", Bg(AnsiValue(226)), Fg(AnsiValue(226))),
+                    Dark => write!(f, "{}{}DY", Bg(AnsiValue(142)), Fg(AnsiValue(142))),
+                }
+            },
+            Hue::Green => {
+                match self.lightness {
+                    Light => write!(f, "{}{}LG", Bg(AnsiValue(157)), Fg(AnsiValue(157))),
+                    Normal => write!(f, "{}{}NG", Bg(AnsiValue(46)), Fg(AnsiValue(46))),
+                    Dark => write!(f, "{}{}DG", Bg(AnsiValue(34)), Fg(AnsiValue(34))),
+                }
+            },
+            Hue::Cyan => {
+                match self.lightness {
+                    Light => write!(f, "{}{}LC", Bg(AnsiValue(159)), Fg(AnsiValue(159))),
+                    Normal => write!(f, "{}{}NC", Bg(AnsiValue(51)), Fg(AnsiValue(51))),
+                    Dark => write!(f, "{}{}DC", Bg(AnsiValue(37)), Fg(AnsiValue(37))),
+                }
+            },
+            Hue::Blue => {
+                match self.lightness {
+                    Light => write!(f, "{}{}LB", Bg(AnsiValue(147)), Fg(AnsiValue(147))),
+                    Normal => write!(f, "{}{}NB", Bg(AnsiValue(21)), Fg(AnsiValue(21))),
+                    Dark => write!(f, "{}{}DB", Bg(AnsiValue(19)), Fg(AnsiValue(19))),
+                }
+            },
+            Hue::Magenta => {
+                match self.lightness {
+                    Light => write!(f, "{}{}LM", Bg(AnsiValue(219)), Fg(AnsiValue(219))),
+                    Normal => write!(f, "{}{}NM", Bg(AnsiValue(201)), Fg(AnsiValue(201))),
+                    Dark => write!(f, "{}{}DM", Bg(AnsiValue(127)), Fg(AnsiValue(127))),
+                }
+            },
+            Hue::White => write!(f, "{}{}WW", Bg(AnsiValue(231)), Fg(AnsiValue(231))),
+            Hue::Black => write!(f, "{}{}DD", Bg(AnsiValue(0)), Fg(AnsiValue(0))),
+        }
+            // Hue::Red => {
+            //     match self.lightness {
+            //         Light => write!(f, "{} ", Bg(Rgb(255, 192, 192))),
+            //         Normal => write!(f, "{} ", Bg(Rgb(255, 0, 0))),
+            //         Dark => write!(f, "{} ", Bg(Rgb(192, 0, 0))),
+            //     }
+            // },
+            // Hue::Yellow => {
+            //     match self.lightness {
+            //         Light => write!(f, "{} ", Bg(Rgb(255, 255, 192))),
+            //         Normal => write!(f, "{} ", Bg(Rgb(255, 255, 0))),
+            //         Dark => write!(f, "{} ", Bg(Rgb(192, 192, 0))),
+            //     }
+            // },
+            // Hue::Green => {
+            //     match self.lightness {
+            //         Light => write!(f, "{} ", Bg(Rgb(192, 255, 192))),
+            //         Normal => write!(f, "{} ", Bg(Rgb(0, 255, 0))),
+            //         Dark => write!(f, "{} ", Bg(Rgb(0, 192, 0))),
+            //     }
+            // },
+            // Hue::Cyan => {
+            //     match self.lightness {
+            //         Light => write!(f, "{} ", Bg(Rgb(192, 255, 255))),
+            //         Normal => write!(f, "{} ", Bg(Rgb(0, 255, 255))),
+            //         Dark => write!(f, "{} ", Bg(Rgb(255, 192, 192))),
+            //     }
+            // },
+            // Hue::Blue => {
+            //     match self.lightness {
+            //         Light => write!(f, "{} ", Bg(Rgb(192, 192, 255))),
+            //         Normal => write!(f, "{} ", Bg(Rgb(0, 0, 255))),
+            //         Dark => write!(f, "{} ", Bg(Rgb(0, 0, 192))),
+            //     }
+            // },
+            // Hue::Magenta => {
+            //     match self.lightness {
+            //         Light => write!(f, "{} ", Bg(Rgb(255, 192, 255))),
+            //         Normal => write!(f, "{} ", Bg(Rgb(255, 0, 255))),
+            //         Dark => write!(f, "{} ", Bg(Rgb(192, 0, 192))),
+            //     }
+            // },
+            // Hue::White => write!(f, "{} ", Bg(Rgb(255, 255, 255))),
+            // Hue::Black => write!(f, "{} ", Bg(Rgb(0, 0, 0))),
     }
 }
 
@@ -444,6 +542,16 @@ fn get_picture(filename: &std::string::String, codel_size: usize) -> Vec<Vec<Cod
     return picture;
 }
 
+fn display_pic (picture: &Vec<Vec<Codel>>, current_codel: &Codel, dp: Direction, cc: Direction) {
+    for row in picture.iter() {
+        for codel in row.iter() {
+            print!("{}", codel.color);
+        }
+        println!("{}", termion::style::Reset);
+    }
+    print!("{:?}{:?}{:?}", current_codel, dp, cc);
+}
+
 fn main() {
     use getopts::Options;
     use std::env;
@@ -452,6 +560,7 @@ fn main() {
     let mut opts = Options::new();
     opts.optopt("c", "codel_size", "Number of pixels per codels. Default: 1", "2");
     opts.optflag("d", "debug", "Use debug mode.");
+    opts.optflag("v", "view", "Display the program being run.");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(e) => panic!(e.to_string()),
@@ -463,6 +572,7 @@ fn main() {
         std::process::exit(1);
     }
 
+    let mut view_program = matches.opt_present("v");
     let debug = matches.opt_present("d");
     let mut codel_size = 1;
     if matches.opt_present("c") {
@@ -475,14 +585,29 @@ fn main() {
     }
 
     let picture = get_picture(&matches.free[0], codel_size);
+    let mut current_codel = picture[0][0].clone();
     let mut piet_stack: Vec<isize> = Vec::new();
     let mut dp = Direction::Right;
     let mut cc = Direction::Left;
     let mut chars = std::io::stdin().chars();
 
-    let mut current_codel = picture[0][0].clone();
+    if view_program {
+        let (width, height) = termion::terminal_size().unwrap();
+        if height as usize > picture.len() || width as usize > picture[0].len() {
+            println!("Picture is larger than terminal size. View anyway [y/n]?");
+            let mut input = String::new();
+            match std::io::stdin().read_line(&mut input) {
+                Ok(_) => view_program = input.chars().next().unwrap() == 'y',
+                Err(error) => panic!(error),
+            }
+        }
+    }
+
     'main_loop: loop {
-        if debug {
+        if view_program {
+            display_pic(&picture, &current_codel, dp, cc);
+            println!("{:?}", piet_stack);
+        } else if debug {
             println!("{:?}, {:?}, {:?}", current_codel, dp, cc);
             println!("{:?}", piet_stack);
         }
