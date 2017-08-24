@@ -5,6 +5,8 @@ use std::io::prelude::*;
 
 extern crate png;
 extern crate getopts;
+
+#[cfg(feature = "default")]
 extern crate termion;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -150,6 +152,7 @@ impl PietColor {
     }
 }
 
+#[cfg(feature = "default")]
 impl std::fmt::Display for PietColor {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         use Lightness::*;
@@ -543,6 +546,7 @@ fn get_picture(
     return picture;
 }
 
+#[cfg(feature = "default")]
 fn display_pic(picture: &Vec<Vec<Codel>>, current_codel: &Codel, dp: Direction, cc: Direction) {
     for row in picture.iter() {
         for codel in row.iter() {
@@ -562,10 +566,12 @@ fn main() {
     opts.optflag("b", "black", "Use black as default color instead of white.");
     opts.optopt("c", "codel_size", "Number of pixels per codels. Default: 1", "2");
     opts.optflag("d", "debug", "Use debug mode.");
-    opts.optflag("v", "view", "Display the program being run.");
+    #[cfg(feature = "default")] { 
+        opts.optflag("v", "view", "Display the program being run.");
+    }
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
-        Err(e) => panic!(e.to_string()),
+        Err(e) => { print!("{}{}", e.to_string(), opts.usage("")); std::process::exit(1) },
     };
 
     if matches.free.len() != 1 {
@@ -574,7 +580,6 @@ fn main() {
         std::process::exit(1);
     }
 
-    let mut view_program = matches.opt_present("v");
     let debug = matches.opt_present("d");
     let mut codel_size = 1;
     if matches.opt_present("c") {
@@ -599,23 +604,31 @@ fn main() {
     let mut cc = Direction::Left;
     let mut chars = std::io::stdin().chars();
 
-    if view_program {
-        let (width, height) = termion::terminal_size().unwrap();
-        if height as usize > picture.len() || width as usize > picture[0].len() {
-            println!("Picture is larger than terminal size. View anyway [y/n]?");
-            let mut input = String::new();
-            match std::io::stdin().read_line(&mut input) {
-                Ok(_) => view_program = input.chars().next().unwrap() == 'y',
-                Err(error) => panic!(error),
+    #[cfg(feature = "default")]
+    let mut view_program = matches.opt_present("v");
+
+    #[cfg(feature = "default")] {
+        if view_program {
+            let (width, height) = termion::terminal_size().unwrap();
+            if height as usize > picture.len() || width as usize > picture[0].len() {
+                println!("Picture is larger than terminal size. View anyway [y/n]?");
+                let mut input = String::new();
+                match std::io::stdin().read_line(&mut input) {
+                    Ok(_) => view_program = input.chars().next().unwrap() == 'y',
+                    Err(error) => panic!(error),
+                }
             }
         }
     }
 
     'main_loop: loop {
-        if view_program {
-            display_pic(&picture, &current_codel, dp, cc);
-            println!("{:?}", piet_stack);
-        } else if debug {
+        #[cfg(feature = "default")] { 
+            if view_program {
+                display_pic(&picture, &current_codel, dp, cc);
+                println!("{:?}", piet_stack);
+            }
+        }
+        if debug {
             println!("{:?}, {:?}, {:?}", current_codel, dp, cc);
             println!("{:?}", piet_stack);
         }
