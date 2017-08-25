@@ -2,8 +2,10 @@
 #![feature(io)]
 
 mod pietcolor;
+mod codel;
 
 use pietcolor::*;
+use codel::*;
 
 use std::io::prelude::*;
 
@@ -12,128 +14,6 @@ extern crate getopts;
 
 #[cfg(feature = "default")]
 extern crate termion;
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct Codel {
-    color: PietColor,
-    x: usize,
-    y: usize,
-}
-
-impl Codel {
-    fn diff_to(self, other: &Codel) -> (usize, usize) {
-        self.color.diff_to(&other.color)
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-enum Direction {
-    Right,
-    Left,
-    Down,
-    Up,
-}
-
-impl Direction {
-    fn to_vector(self) -> (isize, isize) {
-        match self {
-            Direction::Right => (1, 0),
-            Direction::Left => (-1, 0),
-            Direction::Down => (0, 1),
-            Direction::Up => (0, -1),
-        }
-    }
-
-    fn rotate(self) -> Direction {
-        match self {
-            Direction::Right => Direction::Down,
-            Direction::Down => Direction::Left,
-            Direction::Left => Direction::Up,
-            Direction::Up => Direction::Right,
-        }
-    }
-
-    fn opposite(self) -> Direction {
-        match self {
-            Direction::Right => Direction::Left,
-            Direction::Down => Direction::Up,
-            Direction::Left => Direction::Right,
-            Direction::Up => Direction::Down,
-        }
-    }
-}
-
-/* Uses the direction pointer and the codel chooser in order to decide which of the two Codels is
- * the farthest. */
-// First, use the direction pointer. Check if a Codel is farther than the other and return it in
-// this case. If it's a tie, use the codel chooser in order to decide which codel should be chosen.
-//
-fn compare_farthest_codels<'a>(
-    c1: &'a Codel,
-    c2: &'a Codel,
-    dp: Direction,
-    cc: Direction,
-) -> &'a Codel {
-    use Direction::*;
-    if c1 == c2 {
-        c1
-    } else {
-        match dp {
-            Right => {
-                if c1.x > c2.x {
-                    &c1
-                } else if c1.x < c2.x {
-                    &c2
-                } else {
-                    match cc {
-                        Left => if c1.y < c2.y { c1 } else { c2 },
-                        Right => if c1.y > c2.y { c1 } else { c2 },
-                        _ => panic!("Codel chooser is neither Left or Right"),
-                    }
-                }
-            },
-            Left => {
-                if c1.x < c2.x {
-                    &c1
-                } else if c1.x > c2.x {
-                    &c2
-                } else {
-                    match cc {
-                        Left => if c1.y > c2.y { c1 } else { c2 },
-                        Right => if c1.y < c2.y { c1 } else { c2 },
-                        _ => panic!("Codel chooser is neither Left or Right"),
-                    }
-                }
-            },
-            Up => {
-                if c1.y < c2.y {
-                    &c1
-                } else if c1.y > c2.y {
-                    &c2
-                } else {
-                    match cc {
-                        Left => if c1.x < c2.x { c1 } else { c2 },
-                        Right => if c1.x > c2.x { c1 } else { c2 },
-                        _ => panic!("Codel chooser is neither Left or Right"),
-                    }
-                }
-            },
-            Down => {
-                if c1.y > c2.y {
-                    &c1
-                } else if c1.y < c2.y {
-                    &c2
-                } else {
-                    match cc {
-                        Left => if c1.x > c2.x { c1 } else { c2 },
-                        Right => if c1.x < c2.x { c1 } else { c2 },
-                        _ => panic!("Codel chooser is neither Left or Right"),
-                    }
-                }
-            },
-        }
-    }
-}
 
 /* Fetches the farthest codel belonging to the same block as the codel at position x, y
  * picture: A matrix of Codels corresponding to the piet program.
@@ -145,9 +25,9 @@ fn compare_farthest_codels<'a>(
  * the block, the &Codel is the farthest codel that belongs to the same block as the starting
  * position according to the direction pointer and cc.
  * For white blocks the usize is 0 and the codel is the farthest white codel in a straight line
- * in
- * dp's direction. */
-// This is basically a depth-first search implemented using a stack instead of recursion.
+ * in dp's direction.  For other blocks, this is basically a depth-first search implemented using
+ * a stack instead of recursion.
+ * */
 fn get_farthest_codel(
     picture: &Vec<Vec<Codel>>,
     x: usize,
@@ -155,7 +35,7 @@ fn get_farthest_codel(
     dp: Direction,
     cc: Direction,
 ) -> (usize, &Codel) {
-    // White blocks have a different
+    // White blocks have a different algorithm
     if picture[y][x].color.hue == Hue::White {
         let (mut x, mut y) = (x as isize, y as isize);
         let (tmpx, tmpy) = dp.to_vector();
@@ -188,28 +68,26 @@ fn get_farthest_codel(
             // Add it to the list of codels that need to be visited
             codels_to_visit.push((tmpx, tmpy + 1));
         }
-        // If the codel above the current codel is within the bounds, the right colors and hasn't
-        // been visited
+        // Same thing
         if tmpy > 0 && &picture[tmpy - 1][tmpx].color == &picture[y][x].color &&
             !visited_codels.contains(&picture[tmpy - 1][tmpx])
         {
-            // Add it to the list of codels that need to be visited
             codels_to_visit.push((tmpx, tmpy - 1));
         }
-        // Same thing for the codel on the right
+        // Same thing
         if tmpx + 1 < picture[tmpy].len() &&
             &picture[tmpy][tmpx + 1].color == &picture[y][x].color &&
             !visited_codels.contains(&picture[tmpy][tmpx + 1])
         {
             codels_to_visit.push((tmpx + 1, tmpy));
         }
-        // Same thing for the codel on the left
+        // Same thing
         if tmpx > 0 && &picture[tmpy][tmpx - 1].color == &picture[y][x].color &&
             !visited_codels.contains(&picture[tmpy][tmpx - 1])
         {
             codels_to_visit.push((tmpx - 1, tmpy));
         }
-        result = compare_farthest_codels(result, &picture[tmpy][tmpx], dp, cc);
+        result = result.compare_to(&picture[tmpy][tmpx], dp, cc);
     }
 
     return (visited_codels.len(), result);
@@ -218,12 +96,10 @@ fn get_farthest_codel(
 /* Checks whether there is a non-white, non-black codel aligned with the current Codel in the
  * direction of the dp within the picture.
  * returns: A (bool, bool, &Codel) tuple. The first boolean is true if there is an available
- * codel
- * in the direction of the direction pointer, false otherwise. The second bool indicates whether
- * the algorithm encountered white blocks between the current codel and the newly found codel.
- * The
- * returned Codel is the new codel when the bool is true and the starting codel when the bool is
- * false.
+ * codel in the direction of the direction pointer, false otherwise. The second bool indicates
+ * whether the algorithm encountered white blocks between the current codel and the newly found
+ * codel.  The returned Codel is the new codel when the bool is true and the starting codel when
+ * the bool is false.
  * */
 fn can_go_in_direction<'a>(
     picture: &'a Vec<Vec<Codel>>,
@@ -271,7 +147,7 @@ fn get_picture(
             vec![Codel { color: default_color.clone(), x: 0, y: 0 }; pic_width / codel_size];
             pic_height / codel_size
         ];
-    let mut i = -1;
+    let mut i: isize = -1;
     for pixel in buffer.chunks(values_per_pixel) {
         i += 1;
         let (mut x, mut y) = ((i as usize) % pic_width, (i as usize) / pic_width);
@@ -329,12 +205,16 @@ fn main() {
     opts.optflag("b", "black", "Use black as default color instead of white.");
     opts.optopt("c", "codel_size", "Number of pixels per codels. Default: 1", "2");
     opts.optflag("d", "debug", "Use debug mode.");
-    #[cfg(feature = "default")] { 
+    #[cfg(feature = "default")]
+    {
         opts.optflag("v", "view", "Display the program being run.");
     }
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
-        Err(e) => { print!("{}{}", e.to_string(), opts.usage("")); std::process::exit(1) },
+        Err(e) => {
+            print!("{}{}", e.to_string(), opts.usage(""));
+            std::process::exit(1)
+        },
     };
 
     if matches.free.len() != 1 {
@@ -370,7 +250,8 @@ fn main() {
     #[cfg(feature = "default")]
     let mut view_program = matches.opt_present("v");
 
-    #[cfg(feature = "default")] {
+    #[cfg(feature = "default")]
+    {
         if view_program {
             let (width, height) = termion::terminal_size().unwrap();
             if (height as usize) <= picture.len() || (width as usize) < picture[0].len() {
@@ -385,7 +266,8 @@ fn main() {
     }
 
     'main_loop: loop {
-        #[cfg(feature = "default")] { 
+        #[cfg(feature = "default")]
+        {
             if view_program {
                 display_pic(&picture, &current_codel, dp, cc);
                 println!("{:?}", piet_stack);

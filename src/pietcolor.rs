@@ -241,4 +241,3 @@ impl ::std::fmt::Display for PietColor {
         // Hue::Black => write!(f, "{} ", Bg(Rgb(0, 0, 0))),
     }
 }
-
