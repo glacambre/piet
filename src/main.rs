@@ -6,6 +6,7 @@ mod codel;
 
 use pietcolor::*;
 use codel::*;
+use std::*;
 
 use std::io::prelude::*;
 
@@ -52,7 +53,7 @@ fn get_farthest_codel(
     }
 
     let mut codels_to_visit = vec![(x, y); 1];
-    let mut visited_codels = std::collections::HashSet::new();
+    let mut visited_codels = collections::HashSet::new();
 
     let mut result = &picture[y][x];
     while codels_to_visit.len() > 0 {
@@ -103,10 +104,10 @@ fn get_farthest_codel(
  * */
 fn can_go_in_direction<'a>(
     picture: &'a Vec<Vec<Codel>>,
-    current_codel: &'a Codel,
+    cur_codel: &'a Codel,
     dp: Direction,
 ) -> (bool, &'a Codel) {
-    let (mut tmpx, mut tmpy) = (current_codel.x as isize, current_codel.y as isize);
+    let (mut tmpx, mut tmpy) = (cur_codel.x as isize, cur_codel.y as isize);
     let vec = dp.to_vector();
     tmpx += vec.0;
     tmpy += vec.1;
@@ -117,18 +118,18 @@ fn can_go_in_direction<'a>(
         (tmpx as usize) >= picture[(tmpy as usize)].len() ||
         picture[tmpy as usize][tmpx as usize].color.hue == Hue::Black
     {
-        return (false, current_codel);
+        return (false, cur_codel);
     }
     // Return the found codel
     return (true, &picture[tmpy as usize][tmpx as usize]);
 }
 
 fn get_picture(
-    filename: &std::string::String,
+    filename: &string::String,
     codel_size: usize,
     default_color: PietColor,
 ) -> Vec<Vec<Codel>> {
-    let decoder = png::Decoder::new(std::fs::File::open(filename).unwrap());
+    let decoder = png::Decoder::new(fs::File::open(filename).unwrap());
     let (info, mut reader) = decoder.read_info().unwrap();
     let mut buffer = vec![0; info.buffer_size()];
     reader.next_frame(&mut buffer).unwrap();
@@ -159,26 +160,26 @@ fn get_picture(
         picture[y][x].x = x;
         picture[y][x].y = y;
         picture[y][x].color = match &pixel[0..3] {
-            &[255, 192, 192] => PietColor { hue: Hue::Red, lightness: Lightness::Light },
-            &[255, 0, 0] => PietColor { hue: Hue::Red, lightness: Lightness::Normal },
-            &[192, 0, 0] => PietColor { hue: Hue::Red, lightness: Lightness::Dark },
-            &[255, 255, 192] => PietColor { hue: Hue::Yellow, lightness: Lightness::Light },
-            &[255, 255, 0] => PietColor { hue: Hue::Yellow, lightness: Lightness::Normal },
-            &[192, 192, 0] => PietColor { hue: Hue::Yellow, lightness: Lightness::Dark },
-            &[192, 255, 192] => PietColor { hue: Hue::Green, lightness: Lightness::Light },
-            &[0, 255, 0] => PietColor { hue: Hue::Green, lightness: Lightness::Normal },
-            &[0, 192, 0] => PietColor { hue: Hue::Green, lightness: Lightness::Dark },
-            &[192, 255, 255] => PietColor { hue: Hue::Cyan, lightness: Lightness::Light },
-            &[0, 255, 255] => PietColor { hue: Hue::Cyan, lightness: Lightness::Normal },
-            &[0, 192, 192] => PietColor { hue: Hue::Cyan, lightness: Lightness::Dark },
-            &[192, 192, 255] => PietColor { hue: Hue::Blue, lightness: Lightness::Light },
-            &[0, 0, 255] => PietColor { hue: Hue::Blue, lightness: Lightness::Normal },
-            &[0, 0, 192] => PietColor { hue: Hue::Blue, lightness: Lightness::Dark },
-            &[255, 192, 255] => PietColor { hue: Hue::Magenta, lightness: Lightness::Light },
-            &[255, 0, 255] => PietColor { hue: Hue::Magenta, lightness: Lightness::Normal },
-            &[192, 0, 192] => PietColor { hue: Hue::Magenta, lightness: Lightness::Dark },
-            &[0, 0, 0] => PietColor { hue: Hue::Black, lightness: Lightness::Normal },
-            &[255, 255, 255] => PietColor { hue: Hue::White, lightness: Lightness::Normal },
+            &[0xFF, 0xC0, 0xC0] => PietColor { hue: Hue::Red, lightness: Lightness::Light },
+            &[0xFF, 0x00, 0x00] => PietColor { hue: Hue::Red, lightness: Lightness::Normal },
+            &[0xC0, 0x00, 0x00] => PietColor { hue: Hue::Red, lightness: Lightness::Dark },
+            &[0xFF, 0xFF, 0xC0] => PietColor { hue: Hue::Yellow, lightness: Lightness::Light },
+            &[0xFF, 0xFF, 0x00] => PietColor { hue: Hue::Yellow, lightness: Lightness::Normal },
+            &[0xC0, 0xC0, 0x00] => PietColor { hue: Hue::Yellow, lightness: Lightness::Dark },
+            &[0xC0, 0xFF, 0xC0] => PietColor { hue: Hue::Green, lightness: Lightness::Light },
+            &[0x00, 0xFF, 0x00] => PietColor { hue: Hue::Green, lightness: Lightness::Normal },
+            &[0x00, 0xC0, 0x00] => PietColor { hue: Hue::Green, lightness: Lightness::Dark },
+            &[0xC0, 0xFF, 0xFF] => PietColor { hue: Hue::Cyan, lightness: Lightness::Light },
+            &[0x00, 0xFF, 0xFF] => PietColor { hue: Hue::Cyan, lightness: Lightness::Normal },
+            &[0x00, 0xC0, 0xC0] => PietColor { hue: Hue::Cyan, lightness: Lightness::Dark },
+            &[0xC0, 0xC0, 0xFF] => PietColor { hue: Hue::Blue, lightness: Lightness::Light },
+            &[0x00, 0x00, 0xFF] => PietColor { hue: Hue::Blue, lightness: Lightness::Normal },
+            &[0x00, 0x00, 0xC0] => PietColor { hue: Hue::Blue, lightness: Lightness::Dark },
+            &[0xFF, 0xC0, 0xFF] => PietColor { hue: Hue::Magenta, lightness: Lightness::Light },
+            &[0xFF, 0x00, 0xFF] => PietColor { hue: Hue::Magenta, lightness: Lightness::Normal },
+            &[0xC0, 0x00, 0xC0] => PietColor { hue: Hue::Magenta, lightness: Lightness::Dark },
+            &[0x00, 0x00, 0x00] => PietColor { hue: Hue::Black, lightness: Lightness::Normal },
+            &[0xFF, 0xFF, 0xFF] => PietColor { hue: Hue::White, lightness: Lightness::Normal },
             _ => default_color.clone(),
         };
     }
@@ -186,19 +187,75 @@ fn get_picture(
 }
 
 #[cfg(feature = "default")]
-fn display_pic(picture: &Vec<Vec<Codel>>, current_codel: &Codel, dp: Direction, cc: Direction) {
+fn print_pic(picture: &Vec<Vec<Codel>>, offset_x: usize, offset_y: usize) {
     for row in picture.iter() {
         for codel in row.iter() {
-            print!("{}", codel.color);
+            print!(
+                "{}{}",
+                termion::cursor::Goto(
+                    (codel.x * 2 + offset_x + 1) as u16,
+                    (codel.y + offset_y + 1) as u16,
+                ),
+                codel.color
+            );
         }
-        println!("{}", termion::style::Reset);
+        println!("{}\r", termion::style::Reset);
     }
-    print!("{:?}{:?}{:?}", current_codel, dp, cc);
+}
+
+#[cfg(feature = "default")]
+fn display_pic(
+    picture: Vec<Vec<Codel>>,
+    receiving_end: sync::mpsc::Receiver<(bool, Codel, Direction, Direction)>,
+) {
+    use termion::raw::IntoRawMode;
+    let _stdout = termion::input::MouseTerminal::from(io::stdout().into_raw_mode().unwrap());
+    let mut screen = termion::screen::AlternateScreen::from(io::stdout());
+    print!("{}", termion::cursor::Hide);
+
+    let white = PietColor { hue: Hue::White, lightness: Lightness::Normal };
+    while let Ok((true, codel, _, _)) = receiving_end.recv() {
+        print_pic(&picture, 0, 1);
+
+        let (x, y) = (codel.x as u16 * 2 + 1, codel.y as u16 + 2);
+        print!("{}{}", termion::cursor::Goto(x, y), white);
+        screen.flush().unwrap();
+
+        thread::sleep(time::Duration::from_millis(250));
+        print!("{}{}{}", termion::cursor::Goto(x, y), codel.color, termion::style::Reset);
+        screen.flush().unwrap();
+
+        thread::sleep(time::Duration::from_millis(250));
+    }
+
+    print!("{}", termion::cursor::Show);
+    io::stdin().chars().next();
+    screen.flush().unwrap();
+}
+
+#[cfg(feature = "default")]
+fn setup_display(
+    picture: Vec<Vec<Codel>>,
+) -> Option<(thread::JoinHandle<()>, sync::mpsc::Sender<(bool, Codel, Direction, Direction)>)> {
+    let (width, height) = termion::terminal_size().unwrap();
+    if (height as usize) <= picture.len() || (width as usize) < picture[0].len() {
+        println!("Picture is larger than terminal size. View anyway [y/n]?");
+        let mut input = String::new();
+        if let Err(error) = io::stdin().read_line(&mut input) {
+            panic!(error);
+        }
+        if input.chars().next().unwrap() != 'y' {
+            return None;
+        }
+    }
+    let (se, re) = sync::mpsc::channel();
+    let handle = thread::spawn(move || { display_pic(picture, re); });
+    return Some((handle, se));
 }
 
 fn main() {
     use getopts::Options;
-    use std::env;
+    use env;
 
     let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();
@@ -213,14 +270,14 @@ fn main() {
         Ok(m) => m,
         Err(e) => {
             print!("{}{}", e.to_string(), opts.usage(""));
-            std::process::exit(1)
+            process::exit(1)
         },
     };
 
     if matches.free.len() != 1 {
         let brief = format!("Usage: {} file.png [options]", args[0]);
         print!("{}", opts.usage(&brief));
-        std::process::exit(1);
+        process::exit(1);
     }
 
     let debug = matches.opt_present("d");
@@ -230,7 +287,7 @@ fn main() {
             codel_size = if num > 0 { num } else { 1 };
         } else {
             println!("Error: codel size has to be a greater than 0.");
-            std::process::exit(1);
+            process::exit(1);
         }
     }
 
@@ -241,47 +298,33 @@ fn main() {
     };
 
     let picture = get_picture(&matches.free[0], codel_size, default_color);
-    let mut current_codel = picture[0][0].clone();
+    let mut cur_codel = picture[0][0].clone();
     let mut piet_stack: Vec<isize> = Vec::new();
     let mut dp = Direction::Right;
     let mut cc = Direction::Left;
-    let mut chars = std::io::stdin().chars();
+    let mut chars = io::stdin().chars();
 
     #[cfg(feature = "default")]
-    let mut view_program = matches.opt_present("v");
-
-    #[cfg(feature = "default")]
-    {
-        if view_program {
-            let (width, height) = termion::terminal_size().unwrap();
-            if (height as usize) <= picture.len() || (width as usize) < picture[0].len() {
-                println!("Picture is larger than terminal size. View anyway [y/n]?");
-                let mut input = String::new();
-                match std::io::stdin().read_line(&mut input) {
-                    Ok(_) => view_program = input.chars().next().unwrap() == 'y',
-                    Err(error) => panic!(error),
-                }
-            }
-        }
-    }
+    let disp_thread = if matches.opt_present("v") { setup_display(picture.clone()) } else { None };
 
     'main_loop: loop {
         #[cfg(feature = "default")]
         {
-            if view_program {
-                display_pic(&picture, &current_codel, dp, cc);
-                println!("{:?}", piet_stack);
+            if let Some((_, ref channel)) = disp_thread {
+                if let Err(e) = channel.send((true, cur_codel.clone(), dp.clone(), cc.clone())) {
+                    println!("{}", e);
+                }
             }
         }
         if debug {
-            println!("{:?}, {:?}, {:?}", current_codel, dp, cc);
+            println!("{:?}, {:?}, {:?}", cur_codel, dp, cc);
             println!("{:?}", piet_stack);
         }
         let next_codel;
         let mut attempts = 0;
         let mut block_size;
         'codel_choosing: loop {
-            let result = get_farthest_codel(&picture, current_codel.x, current_codel.y, dp, cc);
+            let result = get_farthest_codel(&picture, cur_codel.x, cur_codel.y, dp, cc);
             block_size = result.0;
             let farthest_codel = result.1;
             match (attempts % 2, can_go_in_direction(&picture, farthest_codel, dp)) {
@@ -290,11 +333,11 @@ fn main() {
                     break 'codel_choosing;
                 },
                 (0, (false, codel)) => {
-                    current_codel = codel.clone();
+                    cur_codel = codel.clone();
                     cc = cc.opposite();
                 },
                 (1, (false, codel)) => {
-                    current_codel = codel.clone();
+                    cur_codel = codel.clone();
                     dp = dp.rotate();
                 },
                 _ => unreachable!(),
@@ -304,7 +347,7 @@ fn main() {
                 break 'main_loop;
             }
         }
-        match current_codel.diff_to(next_codel) {
+        match cur_codel.diff_to(next_codel) {
             // Push
             (0, 1) => piet_stack.push(block_size as isize),
             // Pop
@@ -421,7 +464,7 @@ fn main() {
             // in(number)
             (4, 2) => {
                 let mut input = String::new();
-                match std::io::stdin().read_line(&mut input) {
+                match io::stdin().read_line(&mut input) {
                     Ok(_) => piet_stack.push(input.trim_right().parse().unwrap()),
                     Err(error) => {
                         if debug {
@@ -435,7 +478,7 @@ fn main() {
                 if let Some(Ok(char)) = chars.next() {
                     piet_stack.push(char as isize);
                 } else {
-                    chars = std::io::stdin().chars();
+                    chars = io::stdin().chars();
                     if let Some(Ok(char)) = chars.next() {
                         piet_stack.push(char as isize);
                     }
@@ -444,18 +487,55 @@ fn main() {
             // out(number)
             (5, 1) => {
                 if let Some(val) = piet_stack.pop() {
-                    print!("{}", val)
+                    #[cfg(feature = "default")]
+                    {
+                        if let Some(_) = disp_thread {
+                            print!(
+                                "{}{}{}",
+                                termion::screen::ToMainScreen,
+                                val,
+                                termion::screen::ToAlternateScreen
+                            );
+                        }
+                    }
+
+                    print!("{}", val);
                 }
             },
             // out(char)
             (5, 2) => {
                 if let Some(val) = piet_stack.pop() {
-                    print!("{}", std::char::from_u32(val as u32).unwrap())
+                    let val = char::from_u32(val as u32).unwrap();
+                    #[cfg(feature = "default")]
+                    {
+                        if let Some(_) = disp_thread {
+                            print!(
+                                "{}{}{}",
+                                termion::screen::ToMainScreen,
+                                val,
+                                termion::screen::ToAlternateScreen
+                            );
+                        }
+                    }
+
+                    print!("{}", val);
                 }
             },
             (6, _) => (),
             (a, b) => panic!("Error: differences are ({},{}))", a, b),
         }
-        current_codel = next_codel.clone();
+        cur_codel = next_codel.clone();
+    }
+
+    #[cfg(feature = "default")]
+    {
+        if let Some((handle, channel)) = disp_thread {
+            if let Err(e) = channel.send((false, cur_codel, dp, cc)) {
+                println!("{}", e);
+            }
+            if let Err(e) = handle.join() {
+                println!("{:?}", e);
+            }
+        }
     }
 }
