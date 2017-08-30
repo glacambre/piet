@@ -1,7 +1,7 @@
 
 use pietcolor::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Codel {
     pub color: PietColor,
     pub x: usize,

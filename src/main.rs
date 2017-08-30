@@ -1,5 +1,6 @@
 #![feature(slice_patterns)]
 #![feature(io)]
+#![feature(asm)]
 
 mod pietcolor;
 mod codel;
@@ -132,6 +133,7 @@ fn get_picture(
     filename: &string::String,
     codel_size: usize,
     default_color: PietColor,
+    syscalls_enabled: bool,
 ) -> Vec<Vec<Codel>> {
     let decoder = png::Decoder::new(fs::File::open(filename).unwrap());
     let (info, mut reader) = decoder.read_info().unwrap();
@@ -153,6 +155,7 @@ fn get_picture(
             pic_height / codel_size
         ];
     let mut i: isize = -1;
+    let syscall_codel = if syscalls_enabled { PietColor { hue: Hue::Smoke, lightness: Lightness::Normal } } else { default_color.clone() };
     for pixel in buffer.chunks(values_per_pixel) {
         i += 1;
         let (mut x, mut y) = ((i as usize) % pic_width, (i as usize) / pic_width);
@@ -184,6 +187,7 @@ fn get_picture(
             &[0xC0, 0x00, 0xC0] => PietColor { hue: Hue::Magenta, lightness: Lightness::Dark },
             &[0x00, 0x00, 0x00] => PietColor { hue: Hue::Black, lightness: Lightness::Normal },
             &[0xFF, 0xFF, 0xFF] => PietColor { hue: Hue::White, lightness: Lightness::Normal },
+            &[0xC0, 0xC0, 0xC0] => syscall_codel.clone(),
             _ => default_color.clone(),
         };
     }
@@ -199,6 +203,7 @@ fn main() {
     opts.optflag("b", "black", "Use black as default color instead of white.");
     opts.optopt("c", "codel_size", "Number of pixels per codels. Default: 1", "2");
     opts.optflag("d", "debug", "Use debug mode.");
+    opts.optflag("s", "syscalls", "Enable the syscall instruction (color #C0C0C0)");
     #[cfg(feature = "default")]
     {
         opts.optflag("v", "view", "Display the program being run.");
@@ -234,9 +239,9 @@ fn main() {
         PietColor { hue: Hue::White, lightness: Lightness::Normal }
     };
 
-    let picture = get_picture(&matches.free[0], codel_size, default_color);
+    let picture = get_picture(&matches.free[0], codel_size, default_color, matches.opt_present("s"));
     let mut cur_codel = picture[0][0].clone();
-    let mut piet_stack: Vec<isize> = Vec::new();
+    let mut piet_stack: Vec<i64> = Vec::new();
     let mut dp = Direction::Right;
     let mut cc = Direction::Left;
     let mut chars = io::stdin().chars();
@@ -256,6 +261,9 @@ fn main() {
         if debug {
             println!("{:?}, {:?}, {:?}", cur_codel, dp, cc);
             println!("{:?}", piet_stack);
+            if piet_stack.len() > 1 {
+            println!("{:>064b}", piet_stack[0]);
+            }
         }
         let next_codel;
         let mut attempts = 0;
@@ -286,7 +294,7 @@ fn main() {
         }
         match cur_codel.diff_to(next_codel) {
             // Push
-            (0, 1) => piet_stack.push(block_size as isize),
+            (0, 1) => piet_stack.push(block_size as i64),
             // Pop
             (0, 2) => {
                 piet_stack.pop();
@@ -413,11 +421,11 @@ fn main() {
             // in(char)
             (5, 0) => {
                 if let Some(Ok(char)) = chars.next() {
-                    piet_stack.push(char as isize);
+                    piet_stack.push(char as i64);
                 } else {
                     chars = io::stdin().chars();
                     if let Some(Ok(char)) = chars.next() {
-                        piet_stack.push(char as isize);
+                        piet_stack.push(char as i64);
                     }
                 }
             },
@@ -442,23 +450,83 @@ fn main() {
             // out(char)
             (5, 2) => {
                 if let Some(val) = piet_stack.pop() {
-                    let val = char::from_u32(val as u32).unwrap();
-                    #[cfg(feature = "default")]
-                    {
-                        if let Some(_) = disp_thread {
-                            print!(
-                                "{}{}{}",
-                                termion::screen::ToMainScreen,
-                                val,
-                                termion::screen::ToAlternateScreen
-                            );
+                    if let Some(val) = char::from_u32(val as u32) {
+                        #[cfg(feature = "default")]
+                        {
+                            if let Some(_) = disp_thread {
+                                print!(
+                                    "{}{}{}",
+                                    termion::screen::ToMainScreen,
+                                    val,
+                                    termion::screen::ToAlternateScreen
+                                );
+                            }
                         }
+                        print!("{}", val);
                     }
-
-                    print!("{}", val);
                 }
             },
-            (6, _) => (),
+            (6, _) => {
+                if cur_codel.color.hue == Hue::Smoke {
+                    println!("syscall!");
+                    if let Some(syscall_num) = piet_stack.pop() {
+                        let mut syscall_num = syscall_num;
+                        let mut syscall_args = vec![];
+                        if let Some(arg_count) = piet_stack.pop() {
+                            let stack_addr = &piet_stack[0] as *const i64 as u64;
+                            for _ in 0..arg_count {
+                                if let (Some(arg_type), Some(arg)) = (piet_stack.pop(), piet_stack.pop()) {
+                                    match arg_type {
+                                        1 => syscall_args.push(arg),
+                                        2 => syscall_args.push((if arg < 0 { (stack_addr - arg.abs() as u64) as i64 } else { (stack_addr + arg as u64) as i64 })),
+                                        _ => println!("Bad arg_type!"),
+                                    }
+                                }
+                            }
+                        }
+                        unsafe {
+                        let result = match syscall_args.len() {
+                            0 => { asm!("syscall"
+                                      : "+{rax}"(syscall_num)
+                                      :
+                                      : "rcx", "r11", "memory"
+                                      : "volatile"); syscall_num },
+                            1 => { asm!("syscall"
+                                      : "+{rax}"(syscall_num)
+                                      : "{rdi}"(syscall_args[0])
+                                      : "rcx", "r11", "memory"
+                                      : "volatile"); syscall_num },
+                            2 => { asm!("syscall"
+                                      : "+{rax}"(syscall_num)
+                                      : "{rdi}"(syscall_args[0]) "{rsi}"(syscall_args[1])
+                                      : "rcx", "r11", "memory"
+                                      : "volatile"); syscall_num },
+                            3 => { asm!("syscall"
+                                      : "+{rax}"(syscall_num)
+                                      : "{rdi}"(syscall_args[0]) "{rsi}"(syscall_args[1]) "{rdx}"(syscall_args[2])
+                                      : "rcx", "r11", "memory"
+                                      : "volatile"); syscall_num },
+                            4 => { asm!("syscall"
+                                      : "+{rax}"(syscall_num)
+                                      : "{rdi}"(syscall_args[0]) "{rsi}"(syscall_args[1]) "{rdx}"(syscall_args[2]) "{r10}"(syscall_args[3])
+                                      : "rcx", "r11", "memory"
+                                      : "volatile"); syscall_num },
+                            5 => { asm!("syscall"
+                                      : "+{rax}"(syscall_num)
+                                      : "{rdi}"(syscall_args[0]) "{rsi}"(syscall_args[1]) "{rdx}"(syscall_args[2]) "{r10}"(syscall_args[3]) "{r8}"(syscall_args[4])
+                                      : "rcx", "r11", "memory"
+                                      : "volatile"); syscall_num },
+                            _ => { asm!("syscall"
+                                      : "+{rax}"(syscall_num)
+                                      : "{rdi}"(syscall_args[0]) "{rsi}"(syscall_args[1]) "{rdx}"(syscall_args[2]) "{r10}"(syscall_args[3]) "{r8}"(syscall_args[4])"{r9}"(syscall_args[5])
+                                      : "rcx", "r11", "memory"
+                                      : "volatile"); syscall_num },
+                        };
+                        piet_stack.push(result);
+                        }
+                    }
+                }
+            },
             (a, b) => panic!("Error: differences are ({},{}))", a, b),
         }
         cur_codel = next_codel.clone();

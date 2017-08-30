@@ -1,7 +1,7 @@
 #[cfg(feature = "default")]
 extern crate termion;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Lightness {
     Light,
     Normal,
@@ -37,7 +37,7 @@ impl Lightness {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Hue {
     Red,
     Yellow,
@@ -46,6 +46,7 @@ pub enum Hue {
     Blue,
     Magenta,
     White,
+    Smoke,
     Black,
 }
 
@@ -62,6 +63,7 @@ impl Hue {
                     Blue => 4,
                     Magenta => 5,
                     White => 6,
+                    Smoke => 6,
                     Black => 6,
                 }
             },
@@ -74,6 +76,7 @@ impl Hue {
                     Blue => 3,
                     Magenta => 4,
                     White => 6,
+                    Smoke => 6,
                     Black => 6,
                 }
             },
@@ -86,6 +89,7 @@ impl Hue {
                     Blue => 2,
                     Magenta => 3,
                     White => 6,
+                    Smoke => 6,
                     Black => 6,
                 }
             },
@@ -98,6 +102,7 @@ impl Hue {
                     Blue => 1,
                     Magenta => 2,
                     White => 6,
+                    Smoke => 6,
                     Black => 6,
                 }
             },
@@ -110,6 +115,7 @@ impl Hue {
                     Blue => 0,
                     Magenta => 1,
                     White => 6,
+                    Smoke => 6,
                     Black => 6,
                 }
             },
@@ -122,17 +128,19 @@ impl Hue {
                     Blue => 5,
                     Magenta => 0,
                     White => 6,
+                    Smoke => 6,
                     Black => 6,
                 }
             },
             White => 6,
+            Smoke => 6,
             Black => 6,
         }
     }
 }
 
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PietColor {
     pub lightness: Lightness,
     pub hue: Hue,
@@ -193,7 +201,8 @@ impl ::std::fmt::Display for PietColor {
                 }
             },
             Hue::White => write!(f, "{}{}WW", Bg(AnsiValue(231)), Fg(AnsiValue(231))),
-            Hue::Black => write!(f, "{}{}DD", Bg(AnsiValue(0)), Fg(AnsiValue(0))),
+            Hue::Smoke => write!(f, "{}{}SS", Bg(AnsiValue(250)), Fg(AnsiValue(250))),
+            Hue::Black => write!(f, "{}{}BB", Bg(AnsiValue(0)), Fg(AnsiValue(0))),
         }
         // Hue::Red => {
         //     match self.lightness {

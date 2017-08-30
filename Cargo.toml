@@ -10,4 +10,3 @@ default = ["termion"]
 png = "0.9.0"
 getopts = "0.2"
 termion = { version = "1.5.1", optional = true }
-
