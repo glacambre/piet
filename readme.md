@@ -28,6 +28,7 @@ There are two types of arguments:
   the piet stack has to be added to the argument
 
 Here's an example:
+```
 +-----+-------------------+-------------------------------------------+----------------------------------------+
 | pos | Stack (grows up ) |     What it means to the interpreter      |      What it means to the syscall     |
 +-----+-------------------+-------------------------------------------+---------------------------------------+
@@ -42,16 +43,23 @@ Here's an example:
 |  1  |          1        | The third argument is 1                   | that should be read                   |
 |  0  |         42        | Doesn't mean anything                     | This is where the data will be placed |
 +-----+-------------------+-------------------------------------------+---------------------------------------+
+```
 If the stack looks like this when arriving on a Smoke codel, the read(stdin,
 piet\_stack, 1) syscall will be executed. If the string "Hello world!" is
 available in stdin, the piet\_stack will look like this once leaving the smoke
 codel:
+```
 +-----+-------------------+-----------------------------------------------------------------------------------+
 | pos | Stack (grows up ) |                                     What it means                                 | 
 +-----+-------------------+-------------------------------------------+---------------------------------------+
 |  1  |          1        | Return value of the syscall, here it is 1 because read() read a single byte.      |
 |  0  |         72        | This is the byte read by read(), H is '72' in the ascii table.                    |
 +-----+-------------------+-------------------------------------------+---------------------------------------+
+```
+This is an example syspiet program with a codel size of 1 and a codel size of
+10 that will execute write(stdin, piet\_stack, 1):
+![Codel Size=1](https://raw.githubusercontent.com/glacambre/piet/master/data/syspiet_read1.png)
+![Codel Size=10](https://raw.githubusercontent.com/glacambre/piet/master/data/syspiet_read1_big.png)
 
 ### How to use
 Clone this repository, cd into the directory, build using a nightly version of
