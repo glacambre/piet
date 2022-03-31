@@ -548,3 +548,26 @@ fn main() {
         }
     }
 }
+
+#[test]
+fn e2e () {
+    use std::fs::{read_dir, read_to_string};
+    use process::Command;
+    let readdir = read_dir("/home/me/prog/piet/data").unwrap();
+    for png in readdir.map(|f| f.unwrap().path())/*.filter(|f| f.ends_with(".png")) */{
+        let prefix = png.file_prefix().unwrap();
+        let mut expected_filename = String::new();
+        expected_filename.push_str(png.parent().unwrap().to_str().unwrap());
+        expected_filename.push_str("/");
+        expected_filename.push_str(prefix.to_str().unwrap());
+        expected_filename.push_str(".txt");
+        let expected_content = read_to_string(&expected_filename).unwrap();
+        let output = Command::new("cargo")
+            .args(["run", "--", png.to_str().unwrap()])
+            .output()
+            .unwrap()
+            .stdout;
+        let output_as_string = String::from_utf8(output).unwrap();
+        assert_eq!(output_as_string, expected_content);
+    }
+}
