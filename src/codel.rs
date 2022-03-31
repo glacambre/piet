@@ -79,7 +79,7 @@ impl Direction {
                 } else if self == Left {
                     Up
                 } else {
-                    panic!("error: relative_to({}, {}")
+                    panic!("error: relative_to({:?}, {:?}", Right, Left)
                 }
             },
             Down => {
@@ -88,7 +88,7 @@ impl Direction {
                 } else if self == Left {
                     Right
                 } else {
-                    panic!("error: relative_to({}, {}")
+                    panic!("error: relative_to({:?}, {:?})", Left, Right)
                 }
             },
             Left => {
@@ -97,7 +97,7 @@ impl Direction {
                 } else if self == Left {
                     Down
                 } else {
-                    panic!("error: relative_to({}, {}")
+                    panic!("error: relative_to({:?}, {:?})", Up, Down)
                 }
             },
             Up => {
@@ -106,7 +106,7 @@ impl Direction {
                 } else if self == Left {
                     Left
                 } else {
-                    panic!("error: relative_to({}, {}")
+                    panic!("error: relative_to({:?}, {:?})", Right, Left)
                 }
             },
         }

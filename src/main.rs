@@ -1,6 +1,4 @@
-#![feature(slice_patterns)]
-#![feature(io)]
-#![feature(asm)]
+#![feature(llvm_asm)]
 
 mod pietcolor;
 mod codel;
@@ -196,7 +194,6 @@ fn get_picture(
 
 fn main() {
     use getopts::Options;
-    use env;
 
     let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();
@@ -244,7 +241,7 @@ fn main() {
     let mut piet_stack: Vec<i64> = Vec::new();
     let mut dp = Direction::Right;
     let mut cc = Direction::Left;
-    let mut chars = io::stdin().chars();
+    let mut chars = io::stdin().bytes();
 
     #[cfg(feature = "default")]
     let disp_thread = if matches.opt_present("v") { setup_display(picture.clone()) } else { None };
@@ -410,10 +407,10 @@ fn main() {
             (4, 2) => {
                 let mut input = String::new();
                 match io::stdin().read_line(&mut input) {
-                    Ok(_) => piet_stack.push(input.trim_right().parse().unwrap()),
+                    Ok(_) => piet_stack.push(input.trim_end().parse().unwrap()),
                     Err(error) => {
                         if debug {
-                            panic!(error)
+                            panic!("{}", error)
                         }
                     },
                 }
@@ -423,7 +420,7 @@ fn main() {
                 if let Some(Ok(char)) = chars.next() {
                     piet_stack.push(char as i64);
                 } else {
-                    chars = io::stdin().chars();
+                    chars = io::stdin().bytes();
                     if let Some(Ok(char)) = chars.next() {
                         piet_stack.push(char as i64);
                     }
@@ -478,7 +475,7 @@ fn main() {
                                 if let (Some(arg_type), Some(arg)) = (piet_stack.pop(), piet_stack.pop()) {
                                     match arg_type {
                                         1 => syscall_args.push(arg),
-                                        2 => syscall_args.push((if arg < 0 { (stack_addr - arg.abs() as u64) as i64 } else { (stack_addr + arg as u64) as i64 })),
+                                        2 => syscall_args.push(if arg < 0 { (stack_addr - arg.abs() as u64) as i64 } else { (stack_addr + arg as u64) as i64 }),
                                         _ => println!("Bad arg_type!"),
                                     }
                                 }
@@ -486,37 +483,44 @@ fn main() {
                         }
                         unsafe {
                         let result = match syscall_args.len() {
-                            0 => { asm!("syscall"
+                            #[allow(deprecated)]
+                            0 => { llvm_asm!("syscall"
                                       : "+{rax}"(syscall_num)
                                       :
                                       : "rcx", "r11", "memory"
                                       : "volatile"); syscall_num },
-                            1 => { asm!("syscall"
+                            #[allow(deprecated)]
+                            1 => { llvm_asm!("syscall"
                                       : "+{rax}"(syscall_num)
                                       : "{rdi}"(syscall_args[0])
                                       : "rcx", "r11", "memory"
                                       : "volatile"); syscall_num },
-                            2 => { asm!("syscall"
+                            #[allow(deprecated)]
+                            2 => { llvm_asm!("syscall"
                                       : "+{rax}"(syscall_num)
                                       : "{rdi}"(syscall_args[0]) "{rsi}"(syscall_args[1])
                                       : "rcx", "r11", "memory"
                                       : "volatile"); syscall_num },
-                            3 => { asm!("syscall"
+                            #[allow(deprecated)]
+                            3 => { llvm_asm!("syscall"
                                       : "+{rax}"(syscall_num)
                                       : "{rdi}"(syscall_args[0]) "{rsi}"(syscall_args[1]) "{rdx}"(syscall_args[2])
                                       : "rcx", "r11", "memory"
                                       : "volatile"); syscall_num },
-                            4 => { asm!("syscall"
+                            #[allow(deprecated)]
+                            4 => { llvm_asm!("syscall"
                                       : "+{rax}"(syscall_num)
                                       : "{rdi}"(syscall_args[0]) "{rsi}"(syscall_args[1]) "{rdx}"(syscall_args[2]) "{r10}"(syscall_args[3])
                                       : "rcx", "r11", "memory"
                                       : "volatile"); syscall_num },
-                            5 => { asm!("syscall"
+                            #[allow(deprecated)]
+                            5 => { llvm_asm!("syscall"
                                       : "+{rax}"(syscall_num)
                                       : "{rdi}"(syscall_args[0]) "{rsi}"(syscall_args[1]) "{rdx}"(syscall_args[2]) "{r10}"(syscall_args[3]) "{r8}"(syscall_args[4])
                                       : "rcx", "r11", "memory"
                                       : "volatile"); syscall_num },
-                            _ => { asm!("syscall"
+                            #[allow(deprecated)]
+                            _ => { llvm_asm!("syscall"
                                       : "+{rax}"(syscall_num)
                                       : "{rdi}"(syscall_args[0]) "{rsi}"(syscall_args[1]) "{rdx}"(syscall_args[2]) "{r10}"(syscall_args[3]) "{r8}"(syscall_args[4])"{r9}"(syscall_args[5])
                                       : "rcx", "r11", "memory"

@@ -46,7 +46,7 @@ fn display_pic(
     }
 
     print!("{}", termion::cursor::Show);
-    io::stdin().chars().next();
+    io::stdin().bytes().next();
     screen.flush().unwrap();
 }
 
@@ -58,7 +58,7 @@ pub fn setup_display(
         println!("Picture is larger than terminal size. View anyway [y/n]?");
         let mut input = String::new();
         if let Err(error) = io::stdin().read_line(&mut input) {
-            panic!(error);
+            panic!("{}", error);
         }
         if input.chars().next().unwrap() != 'y' {
             return None;
